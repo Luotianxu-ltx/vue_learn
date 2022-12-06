@@ -18,7 +18,6 @@ class Observer {
         })
         if (Array.isArray(value)) {
             value.__proto__ = ArrayMethods
-            console.log('数组')
             // 如果是数组对象
             this.observeArray(value)
         } else {
