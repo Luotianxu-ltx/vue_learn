@@ -1,71 +1,104 @@
 const ncname = `[a-zA-Z_][\\-\\.0-9_a-zA-Z]*` // 标签名称
 const qnameCapture = `((?:${ncname}\\:)?${ncname})` //<span:xx>
 const startTagOpen = new RegExp(`^<${qnameCapture}`) //标签开头的正则 捕获的内容是标签名
-const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*`) // 匹配标签结尾的</div>
+const endTag = new RegExp(`^<\\/${qnameCapture}[^>]*>`) // 匹配标签结尾的</div>
 const attribute =
     /^\s*([^\s"'<>\/=]+)(?:\s*(=)\s*(?:"([^"]*)"+|'([^']*)'+|([^\s"'=<>`]+)))?/
 const startTagClose = /^\s*(\/?)>/ // 匹配标签结束的
 const edfaultTagRE = /\{\{((?:.|\r?\n)+?)\}\}/g // {{}}
 
-// 解析html
-// 创建ast语法树
-function createAstElement(tag, attrs) {
-    return {
-        tag,
-        attrs,
-        children: [],
-        type: 1,
-        parent: null,
-    }
-}
-// 根元素
-let root
-// 当前元素的父亲
-let createParent
-// 数据结构 栈
-let stack = []
-// 开始标签
-function start(tag, attrs) {
-    let element = createAstElement(tag, attrs)
-    if (!root) {
-        root = element
-    }
-    createParent = element
-    stack.push(element)
-}
-// 获取文本
-function charts(text) {
-    text = text.replace(/s/g, '')
-    if (text) {
-        createParent.children.push({
-            type: 3,
-            text,
-        })
-    }
-}
-// 结束标签
-function end(tag) {
-    let element = stack.pop()
-    createParent = stack[stack.length - 1]
-    if (createParent) {
-        element.parent = createParent.tag
-        createParent.children.push(element)
-    }
-}
+// 对模板进行编译处理
 function parseHTML(html) {
-    // html为空结束
+    const ELEMENT_TYPE = 1
+    const TEXT_TYPE = 3
+    const stack = [] // 用于存放元素
+    let currentParent // 指向的是栈中的最后一个
+    let root
+
+    function createASTElement(tag, attrs) {
+        return {
+            tag,
+            type: ELEMENT_TYPE,
+            children: [],
+            attrs,
+            parent: null,
+        }
+    }
+
+    function start(tag, attrs) {
+        let node = createASTElement(tag, attrs) // 创造一个ast节点
+        if (!root) {
+            // 看一下是否空树,如果是空则当前是树的根节点
+            root = node
+        }
+        if (currentParent) {
+            node.parent = currentParent
+            currentParent.children.push(node)
+        }
+        stack.push(node)
+        currentParent = node
+    }
+
+    function chars(text) {
+        console.log(text)
+        text = text.replace(/\s/g, '')
+        // 文本直接放到当前指向的节点中
+        text &&
+            currentParent.children.push({
+                type: TEXT_TYPE,
+                text,
+                parent: currentParent,
+            })
+    }
+
+    function end() {
+        stack.pop()
+        currentParent = stack[stack.length - 1]
+    }
+
+    function advance(n) {
+        html = html.substring(n)
+    }
+
+    function parseStartTag() {
+        const start = html.match(startTagOpen)
+        if (start) {
+            const match = {
+                tagName: start[1], // 标签名
+                attrs: [],
+            }
+            advance(start[0].length)
+            // 如果不是开始标签的结束就一直匹配
+            let attr, end
+            while (
+                !(end = html.match(startTagClose)) &&
+                (attr = html.match(attribute))
+            ) {
+                advance(attr[0].length)
+                match.attrs.push({
+                    name: attr[1],
+                    value: attr[3] || attr[4] || attr[5] || true,
+                })
+            }
+            if (end) {
+                advance(end[0].length)
+            }
+            return match
+        }
+        return false
+    }
+
     while (html) {
-        // 判断标签
+        // 如果indexOf中的索引为0，则说明是个标签
+        // 如果indexOf>0说明是文本的结束位置
         let textEnd = html.indexOf('<')
-        // 标签
-        if (textEnd === 0) {
-            // (1)开始标签
-            const startTagMach = parseStartTag() // 开始标签内容
-            if (startTagMach) {
-                start(startTagMach.tagName, startTagMach.attrs)
+        if (textEnd == 0) {
+            const startTagMatch = parseStartTag() // 开始标签的匹配结果
+            if (startTagMatch) {
+                // 解析到的开始标签
+                start(startTagMatch.tagName, startTagMatch.attrs)
                 continue
             }
-            // (2)结束标签
             let endTagMatch = html.match(endTag)
             if (endTagMatch) {
                 advance(endTagMatch[0].length)
@@ -73,54 +106,15 @@ function parseHTML(html) {
                 continue
             }
         }
-        // 文本
-        let text
         if (textEnd > 0) {
-            // 获取文本内容
-            text = html.substring(0, textEnd)
-        }
-        if (text) {
-            advance(text.length)
-            charts(text)
-        }
-    }
-
-    function parseStartTag() {
-        const start = html.match(startTagOpen) // 1返回结果 2false
-        if (start) {
-            // 创建ast语法树
-            let match = {
-                tagName: start[1],
-                attrs: [],
-            }
-            // 删除开始标签
-            advance(start[0].length)
-            // 属性 遍历
-            let attr
-            let end
-            while (
-                !(end = html.match(startTagClose)) &&
-                (attr = html.match(attribute))
-            ) {
-                match.attrs.push({
-                    name: attr[1],
-                    value: attr[3] || attr[4] || attr[5],
-                })
-                advance(attr[0].length)
-            }
-            if (end) {
-                advance(end[0].length)
-                return match
+            let text = html.substring(0, textEnd) // 解析到的文本
+            if (text) {
+                chars(text)
+                advance(text.length)
             }
         }
     }
-
-    function advance(n) {
-        html = html.substring(n)
-    }
-
     console.log(root)
-    return root
 }
 
 export function compileToFunction(el) {

@@ -7,24 +7,35 @@
     <title>Document</title>
 </head>
 <body>
-    <div id="app">Hello{{msg}}<h1>666<span>555</span></h1></div>
+    <div id="app">
+        <div style="color: red;">
+            {{name}}hello
+        </div>
+        <span>{{age}}</span>
+    </div>
     <script src="dist/vue.js"></script>
     <script>
         let vm = new Vue({
             el: '#app',
-            // data: {
-            //     msg: 'hello'
-            // },
-            data() {
-                return {
-                    msg: 'hello',
-                    a: {
-                        b: 20,
-                        c: [1,2]
-                    },
-                    list: [1,2,3]
-                }
-            }
+            data: {
+                msg: 'zf',
+                age:20,
+                address:{
+                    num:30,
+                    content: '回龙观'
+                },
+                hobby: ['eat','drink',{a:1}]
+            },
+            // data() {
+            //     return {
+            //         msg: 'hello',
+            //         a: {
+            //             b: 20,
+            //             c: [1,2]
+            //         },
+            //         list: [1,2,3]
+            //     }
+            // }
         })
     </script>
 </body>
