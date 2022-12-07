@@ -1,5 +1,6 @@
 import { initState } from './initState'
 import { compileToFunction } from './compile/index'
+import { mountComponent } from './lifecycle'
 
 export function initMixin(Vue) {
     Vue.prototype._init = function (options) {
@@ -7,7 +8,6 @@ export function initMixin(Vue) {
         vm.$options = options
         // 初始化状态
         initState(vm)
-
         // 渲染模板
         if (vm.$options.el) {
             vm.$mount(vm.$options.el)
@@ -19,14 +19,21 @@ export function initMixin(Vue) {
         // el template render
         let vm = this
         el = document.querySelector(el)
-        let options = vm.$options
-        if (!options.render) {
-            let template = options.template
-            if (!template && el) {
-                // 获取html
-                el = el.outerHTML
-                let ast = compileToFunction(el)
+        let ops = vm.$options
+        if (!ops.render) {
+            let template
+            if (!ops.template && el) {
+                template = el.outerHTML
+            } else {
+                if (el) {
+                    template = ops.template
+                }
+            }
+            if (template && el) {
+                const render = compileToFunction(template)
+                ops.render = render
             }
         }
+        mountComponent(vm, el)
     }
 }

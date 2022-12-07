@@ -1,4 +1,5 @@
 import { ArrayMethods } from './arr'
+import Dep from './dep'
 
 export function observer(data) {
     // 判断数据
@@ -43,8 +44,12 @@ class Observer {
 // 对对象中的属性进行劫持
 function defineReactive(data, key, value) {
     observer(value) // 深度劫持
+    let dep = new Dep() // 每一个属性都有一个dep
     Object.defineProperty(data, key, {
         get() {
+            if (Dep.target) {
+                dep.depend() // 让这个属性的收集器记住当前的watcher
+            }
             console.log('获取')
             return value
         },

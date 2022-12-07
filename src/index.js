@@ -1,4 +1,5 @@
 import { initMixin } from './init'
+import { initLifeCycle } from './lifecycle'
 
 function Vue(options) {
     // 初始化
@@ -6,5 +7,6 @@ function Vue(options) {
 }
 
 initMixin(Vue)
+initLifeCycle(Vue)
 
 export default Vue
