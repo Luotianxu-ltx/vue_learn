@@ -9,9 +9,12 @@
 <body>
     <div id="app" style="color: red;background: yellow;">
         <div style="color: green;" key="123">
-            {{name}}hello{{age}}
+            {{arr}}
         </div>
         <li>world</li>
+        {{firstName}} {{lastName}}
+        <hr/>
+        {{fullname}}
     </div>
     <script src="dist/vue.js"></script>
     <script>
@@ -23,16 +26,29 @@
                     num:30,
                     content: '回龙观'
                 },
-                hobby: ['eat','drink',{a:1}]
+                arr: [1,2,3,{a:1},['a','b']],
+                firstName: 'luo',
+                lastName: 'tian'
             },
+            computed: {
+                fullname() {
+                    return this.firstName + this.lastName
+                }
+                // fullname: {
+                //     get() {
+                //         return this.firstName + this.lastName
+                //     },
+                //     set(newValue) {
+                //         console.log(newValue);
+                //     }
+                // }
+            }
         })
         vm.$mount('#app')
-
         setTimeout(() => {
-            vm.name = 'jw'
-            vm.age = 30
-            // vm._update(vm._render())
+            vm.firstName = 132
         },1000)
+
     </script>
 </body>
 </html>

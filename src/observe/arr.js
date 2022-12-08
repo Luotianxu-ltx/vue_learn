@@ -10,7 +10,6 @@ let methods = ['push', 'pop', 'unshift', 'shift', 'splice']
 
 methods.forEach((item) => {
     ArrayMethods[item] = function (...args) {
-        console.log('劫持数组')
         let result = oldArrayProtoMethods[item].apply(this, args)
         // 数组追加对象的情况
         let inserted
@@ -27,6 +26,7 @@ methods.forEach((item) => {
         if (inserted) {
             ob.observeArray(inserted)
         }
+        ob.dep.notify()
         return result
     }
 })

@@ -1,4 +1,4 @@
-import Dep from './dep'
+import Dep, { popTarget, pushTarget } from './dep'
 
 let id = 0
 
@@ -10,12 +10,116 @@ class Watcher {
         this.id = id++
         this.renderWatcher = options
         this.getter = fn // getter意味着调用这个函数可以发生取值操作
-        this.get()
+        this.deps = []
+        this.depsId = new Set()
+        this.lazy = options.lazy
+        this.dirty = this.lazy
+        this.vm = vm
+        this.lazy ? undefined : this.get()
+    }
+    // 一个组件对应多个属性，重复的属性不用记录
+    addDep(dep) {
+        let id = dep.id
+        if (!this.depsId.has(id)) {
+            this.deps.push(dep)
+            this.depsId.add(id)
+            dep.addSub(this)
+        }
+    }
+    evaluate() {
+        this.value = this.get() // 获取用户返回值并标识为藏
+        this.dirty = false
     }
     get() {
-        Dep.target = this
-        this.getter()
-        Dep.target = null
+        pushTarget(this)
+        let value = this.getter.call(this.vm) // vm上取值
+        popTarget()
+        return value
+    }
+    depend() {
+        let i = this.deps.length
+        while (i--) {
+            this.deps[i].depend()
+        }
+    }
+    // 重新渲染
+    update() {
+        // this.get()
+        if (this.lazy) {
+            // 如果是计算属性
+            this.dirty = true
+        } else {
+            queueWatcher(this) // 把当前的watcher暂存起来
+        }
+    }
+    run() {
+        this.get()
+    }
+}
+
+let queue = []
+let has = {}
+let pending = false
+
+function flushSchedulerQueue() {
+    let flushQueue = queue.slice(0)
+    queue = []
+    has = {}
+    pending = false
+    flushQueue.forEach((q) => q.run()) // 在刷新的过程中可能还有新的watcher，重新放到queue中
+}
+
+function queueWatcher(watcher) {
+    const id = watcher.id
+    if (!has[id]) {
+        queue.push(watcher)
+        has[id] = true
+        // 不管update执行多少次，最终只执行一轮刷新操作
+        if (!pending) {
+            nextTick(flushSchedulerQueue, 0)
+            pending = true
+        }
+    }
+}
+
+let calllbacks = []
+let waiting = false
+function flushCallbacks() {
+    let cbs = calllbacks.slice(0)
+    waiting = false
+    calllbacks = []
+    cbs.forEach((cb) => cb())
+}
+
+let timerFunc
+if (Promise) {
+    timerFunc = () => {
+        Promise.resolve().then(flushCallbacks)
+    }
+} else if (MutationObserver) {
+    let observe = new MutationObserver(flushCallbacks)
+    let textNode = document.createTextNode(1)
+    observe.observe(textNode, {
+        characterDataL: true,
+    })
+    timerFunc = () => {
+        textNode.textContent = 2
+    }
+} else if (setImmediate) {
+    timerFunc = () => {
+        setImmediate(flushCallbacks)
+    }
+} else {
+    timerFunc = () => {
+        setTimeout(flushCallbacks)
+    }
+}
+
+export function nextTick(cb) {
+    calllbacks.push(cb)
+    if (!waiting) {
+        timerFunc()
+        waiting = true
     }
 }
 

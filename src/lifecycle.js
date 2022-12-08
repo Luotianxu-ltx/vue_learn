@@ -71,7 +71,7 @@ export function mountComponent(vm, el) {
     const updateComponent = () => {
         vm._update(vm._render()) // vm.$options.render() 返回虚拟节点
     }
-    new Watcher(vm, updateComponent, true) // true用于表示是一个渲染watcher
+    const watcher = new Watcher(vm, updateComponent, true) // true用于表示是一个渲染watcher
     // 1 调用render方法产生虚拟dom
     // 2 根据虚拟dom产生真是dom
     // 3 插入到el元素中
