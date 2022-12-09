@@ -1,4 +1,4 @@
-import Dep, { popTarget, pushTarget } from './dep'
+import { popTarget, pushTarget } from './dep'
 
 let id = 0
 
@@ -6,16 +6,24 @@ let id = 0
 // 2 调用_render()会取值 走到get上
 class Watcher {
     // 不同组件有不同的watcher
-    constructor(vm, fn, options) {
+    constructor(vm, exprOrFn, options, cb) {
         this.id = id++
-        this.renderWatcher = options
-        this.getter = fn // getter意味着调用这个函数可以发生取值操作
+        this.renderWatcher = options // 是一个渲染watcher
+        if (typeof exprOrFn === 'string') {
+            this.getter = function () {
+                return vm[exprOrFn]
+            }
+        } else {
+            this.getter = exprOrFn // getter意味着调用这个函数可以发生取值操作
+        }
         this.deps = []
         this.depsId = new Set()
         this.lazy = options.lazy
         this.dirty = this.lazy
         this.vm = vm
-        this.lazy ? undefined : this.get()
+        this.cb = cb
+        this.user = options.user // 标识是否是用户自己的watcher
+        this.value = this.lazy ? undefined : this.get()
     }
     // 一个组件对应多个属性，重复的属性不用记录
     addDep(dep) {
@@ -27,7 +35,7 @@ class Watcher {
         }
     }
     evaluate() {
-        this.value = this.get() // 获取用户返回值并标识为藏
+        this.value = this.get() // 获取用户返回值并标识为脏
         this.dirty = false
     }
     get() {
@@ -53,7 +61,11 @@ class Watcher {
         }
     }
     run() {
-        this.get()
+        let oldValue = this.value
+        let newValue = this.get()
+        if (this.user) {
+            this.cb(newValue, oldValue)
+        }
     }
 }
 

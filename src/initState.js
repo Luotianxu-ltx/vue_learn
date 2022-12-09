@@ -12,7 +12,7 @@ export function initState(vm) {
         initData(vm)
     }
     if (opts.watch) {
-        initWatch()
+        initWatch(vm)
     }
     if (opts.computed) {
         initComputed(vm)
@@ -33,6 +33,53 @@ function initComputed(vm) {
 
         defineComputed(vm, key, userDef)
     }
+}
+
+function initWatch(vm) {
+    let watch = vm.$options.watch
+    for (let key in watch) {
+        const handler = watch[key]
+        if (Array.isArray(handler)) {
+            for (let i = 0; i < handler.length; i++) {
+                createWatcher(vm, key, handler)
+            }
+        } else {
+            createWatcher(vm, key, handler)
+        }
+    }
+}
+
+function createWatcher(vm, key, handler) {
+    if (typeof handler === 'string') {
+        handler = vm[handler]
+    }
+    return vm.$watch(key, handler)
+}
+
+function initMethods() {}
+function initProps() {}
+
+// 对data初始化 （1）对象 （2）函数
+function initData(vm) {
+    let data = vm.$options.data
+    data = vm._data = typeof data === 'function' ? data.call(vm) : data //this指向
+    // 将data上所有属性代理到实例上
+    for (let key in data) {
+        proxy(vm, '_data', key)
+    }
+    // data数据劫持
+    observer(data)
+}
+
+function proxy(vm, source, key) {
+    Object.defineProperty(vm, key, {
+        get() {
+            return vm[source][key]
+        },
+        set(newValue) {
+            vm[source][key] = newValue
+        },
+    })
 }
 
 function defineComputed(target, key, userDef) {
@@ -56,30 +103,4 @@ function createComputedGetter(key) {
         }
         return watcher.value
     }
-}
-function initMethods() {}
-function initProps() {}
-function initWatch() {}
-
-// 对data初始化 （1）对象 （2）函数
-function initData(vm) {
-    let data = vm.$options.data
-    data = vm._data = typeof data === 'function' ? data.call(vm) : data //this指向
-    // 将data上所有属性代理到实例上
-    for (let key in data) {
-        proxy(vm, '_data', key)
-    }
-    // data数据劫持
-    observer(data)
-}
-
-function proxy(vm, source, key) {
-    Object.defineProperty(vm, key, {
-        get() {
-            return vm[source][key]
-        },
-        set(newValue) {
-            vm[source][key] = newValue
-        },
-    })
 }

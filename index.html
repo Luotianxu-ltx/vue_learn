@@ -42,6 +42,11 @@
                 //         console.log(newValue);
                 //     }
                 // }
+            },
+            watch: {
+                firstName(newValue,oldValue) {
+                    console.log(newValue,oldValue);
+                }
             }
         })
         vm.$mount('#app')
