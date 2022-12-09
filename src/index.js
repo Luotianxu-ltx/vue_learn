@@ -1,19 +1,14 @@
 import { initMixin } from './init'
 import { initLifeCycle } from './lifecycle'
-import Watcher, { nextTick } from './observe/watcher'
+import { initStateMixin } from './initState'
 
 function Vue(options) {
     // 初始化
     this._init(options)
 }
 
-Vue.prototype.$nextTick = nextTick
 initMixin(Vue)
-initLifeCycle(Vue)
-
-Vue.prototype.$watch = function (exprOrFn, cb, options = {}) {
-    console.log(exprOrFn, cb, options)
-    new Watcher(this, exprOrFn, { user: true }, cb)
-}
+initLifeCycle(Vue) //vm_update vm._render
+initStateMixin(Vue) // 实现nextTick,$watch
 
 export default Vue
