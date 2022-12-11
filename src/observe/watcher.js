@@ -47,12 +47,12 @@ class Watcher {
     depend() {
         let i = this.deps.length
         while (i--) {
-            this.deps[i].depend()
+            this.deps[i].depend() // 让计算属性watcher也手机渲染watcher
         }
     }
     // 重新渲染
     update() {
-        // this.get()
+        // this.get() 依赖的值变化了就表示计算属性是脏值
         if (this.lazy) {
             // 如果是计算属性
             this.dirty = true

@@ -91,13 +91,16 @@ function defineComputed(target, key, userDef) {
     })
 }
 
+// 计算实行根本不会收集依赖，只会让自己的依赖属性去收集依赖
 function createComputedGetter(key) {
     // 检测是否实行这个getter
     return function () {
         const watcher = this._computedWatchers[key]
         if (watcher.dirty) {
+            // 如果是脏的就去执行用户传入的函数
             watcher.evaluate()
         }
+        // 如果计算属性出栈后，还要渲染watcher，让计算属性watcher里面的属性也去手机上一层watcher
         if (Dep.target) {
             watcher.depend()
         }
