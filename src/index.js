@@ -3,6 +3,7 @@ import { initLifeCycle } from './lifecycle'
 import { initStateMixin } from './initState'
 import { compileToFunction } from './compile/index'
 import { createElm, patch } from './vdom/patch'
+import { initGlobalAPI } from './gloablAPI'
 
 function Vue(options) {
     // 初始化
@@ -11,6 +12,7 @@ function Vue(options) {
 
 initMixin(Vue)
 initLifeCycle(Vue) //vm_update vm._render
+initGlobalAPI(Vue)
 initStateMixin(Vue) // 实现nextTick,$watch
 
 // let render1 = compileToFunction(`<ul style="color: blue">

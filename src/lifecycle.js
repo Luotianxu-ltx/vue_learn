@@ -51,3 +51,10 @@ export function mountComponent(vm, el) {
  * 3 将ast语法树转换了render函数
  * 4 后续每次数据可以只执行render函数， 无需再次执行ast转化过程
  */
+
+export function callHook(vm, hook) {
+    const handlers = vm.$options[hook]
+    if (handlers) {
+        handlers.forEach((handler) => handler.call(vm))
+    }
+}
