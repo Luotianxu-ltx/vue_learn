@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <div id="app" style="color: red;background: yellow;">
+        <div style="color: green;" key="123">
+            {{arr}}
+        </div>
+        <li>world</li>
+        {{firstName}} {{lastName}}
+        <hr/>
+        {{fullname}}
+        <div id="root"></div>
+    </div>
+    <script src="dist/vue.js"></script>
+    <script>
+        Vue.component('my-button', {
+            template: '<button>全局button</button>'
+        })
+        let Sub = Vue.extend({
+            template: '<div>子组件<my-button></my-button></div>',
+            components: {
+                'my-button':{
+                    template: '<button>子组件自己声明的button</button>'
+                }
+            }
+        });
+        new Sub().$mount('#root')
+        Vue.mixin({
+            created() {
+                console.log('mixin1-created')
+            }
+        })
+        Vue.mixin({
+            created() {
+                console.log('mixin12-created')
+            }
+        })
+
+        let vm = new Vue({
+            data: {
+                name: 'zf',
+                age:20,
+                address:{
+                    num:30,
+                    content: '回龙观'
+                },
+                arr: [1,2,3,{a:1},['a','b']],
+                firstName: 'luo',
+                lastName: 'tian'
+            },
+            computed: {
+                fullname() {
+                    return this.firstName + this.lastName
+                }
+                // fullname: {
+                //     get() {
+                //         return this.firstName + this.lastName
+                //     },
+                //     set(newValue) {
+                //         console.log(newValue);
+                //     }
+                // }
+            },
+            watch: {
+                firstName(newValue,oldValue) {
+                    console.log(newValue,oldValue);
+                }
+            },
+            created() {
+                console.log(123);
+            }
+        })
+        vm.$mount('#app')
+        setTimeout(() => {
+            vm.firstName = 132
+        },1000)
+
+    </script>
+</body>
+</html>
